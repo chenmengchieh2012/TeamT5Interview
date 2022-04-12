@@ -22,25 +22,26 @@ type AccountController interface {
 }
 
 type IAccountController struct {
-	engine *gin.Engine
+	engine *gin.RouterGroup
 	prefix string
 }
 
 const fileSavePathDir = "file/account/"
 
 func CreateAccountController(engine *gin.Engine) AccountController {
+	group := engine.Group("/v1/account")
 	c := &IAccountController{
 		prefix: "/v1/account",
-		engine: engine,
+		engine: group,
 	}
 	c.Registry()
 	return c
 }
 
 func (controller *IAccountController) Registry() {
-	controller.engine.POST(controller.prefix+"/registry", controller.RegistryAccount)
-	controller.engine.POST(controller.prefix+"/login", controller.loginAccount)
-	controller.engine.POST(controller.prefix+"/logout", controller.logoutAccount)
+	controller.engine.POST("/registry", controller.RegistryAccount)
+	controller.engine.POST("/login", controller.loginAccount)
+	controller.engine.GET("/logout", controller.logoutAccount)
 }
 
 func (controller *IAccountController) RegistryAccount(c *gin.Context) {
@@ -96,10 +97,12 @@ func (controller *IAccountController) loginAccount(c *gin.Context) {
 		bData, err := ioutil.ReadFile(filepath)
 		readAccount := &Account{}
 		if err != nil {
+			fmt.Println(err)
 			goto Error
 		}
 		err = json.Unmarshal(bData, readAccount)
 		if err != nil {
+			fmt.Println(err)
 			goto Error
 		}
 		if readAccount.Password == account.Password {
@@ -119,12 +122,7 @@ Error:
 
 func (controller *IAccountController) logoutAccount(c *gin.Context) {
 	session := sessions.Default(c)
-	var account Account
-	err := c.Bind(&account)
-	if err != nil {
-		return
-	}
-	if session.Get(account.Username) == true {
+	if session.Get(utils.LOGIN_STATUSKEY) == true {
 		session.Delete(utils.LOGIN_STATUSKEY)
 		session.Delete(utils.LOGIN_USERNAMEKEY)
 		session.Save()

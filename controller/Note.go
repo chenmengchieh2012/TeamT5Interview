@@ -24,16 +24,17 @@ type NoteController interface {
 }
 
 type INoteController struct {
-	engine *gin.Engine
+	engine *gin.RouterGroup
 	prefix string
 }
 
 const notePathDir = "file/note/"
 
 func CreateNoteController(engine *gin.Engine) AccountController {
+	group := engine.Group("/v1/note")
 	c := &INoteController{
 		prefix: "/v1/note",
-		engine: engine,
+		engine: group,
 	}
 	c.Registry()
 	return c
@@ -41,10 +42,10 @@ func CreateNoteController(engine *gin.Engine) AccountController {
 
 func (controller *INoteController) Registry() {
 	controller.engine.Use(controller.Autherization())
-	controller.engine.GET(controller.prefix+"/fileId/:fileId", controller.GetNote)
-	controller.engine.GET(controller.prefix+"/", controller.GetAllNote)
-	controller.engine.POST(controller.prefix+"/", controller.CreateNote)
-	controller.engine.PUT(controller.prefix+"/fileId/:fileId", controller.UpdateNote)
+	controller.engine.GET("/fileId/:fileId", controller.GetNote)
+	controller.engine.GET("/", controller.GetAllNote)
+	controller.engine.POST("/", controller.CreateNote)
+	controller.engine.PUT("/fileId/:fileId", controller.UpdateNote)
 }
 
 func (controller *INoteController) Autherization() gin.HandlerFunc {
