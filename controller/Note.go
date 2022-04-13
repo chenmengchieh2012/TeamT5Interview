@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"teamt5interview/utils"
 	"time"
 
@@ -43,6 +44,7 @@ func CreateNoteController(engine *gin.Engine) AccountController {
 func (controller *INoteController) Registry() {
 	controller.engine.Use(controller.Autherization())
 	controller.engine.GET("/fileId/:fileId", controller.GetNote)
+	controller.engine.DELETE("/fileId/:fileId", controller.DeleteNote)
 	controller.engine.GET("/", controller.GetAllNote)
 	controller.engine.POST("/", controller.CreateNote)
 	controller.engine.PUT("/fileId/:fileId", controller.UpdateNote)
@@ -196,6 +198,32 @@ func (controller *INoteController) CreateNote(c *gin.Context) {
 	err = ioutil.WriteFile(noteFilePath, jsonEntity, 0644)
 	if err != nil {
 		goto Error
+	}
+	c.JSON(200, "success")
+	return
+Error:
+	c.JSON(400, "error parameter")
+	return
+}
+
+func (controller *INoteController) DeleteNote(c *gin.Context) {
+	var note Note
+	err := c.Bind(&note)
+	if err != nil {
+		return
+	}
+	session := sessions.Default(c)
+	username := session.Get(utils.LOGIN_USERNAMEKEY)
+	userDirName := b64.StdEncoding.EncodeToString([]byte(username.(string)))
+	userDirPath := notePathDir + userDirName
+	if fileId, ok := c.Params.Get("fileId"); !ok {
+		goto Error
+	} else {
+		noteFilePath := userDirPath + "/" + fileId
+		err := os.Remove(noteFilePath)
+		if err != nil {
+			goto Error
+		}
 	}
 	c.JSON(200, "success")
 	return

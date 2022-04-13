@@ -1,0 +1,44 @@
+body{
+    position: absolute;
+    margin-top: 5rem;
+    min-height: 480px;
+    left: 15%;
+    width: 70%;
+}
+
+#login-tab{
+    height: 480px;
+    vertical-align: middle;
+}
+
+#loginDom{
+    display: none;
+    visibility: hidden;
+    padding-top: 12px;
+    padding-left: 5%;
+    padding-right: 5%;
+}
+
+#registryDom{
+    display: none;
+    visibility: hidden;
+    padding-top: 12px;
+}
+
+#tab-login{
+    display: none;
+}
+
+#tab-registry{
+    display: none;
+}
+
+#tab-login:checked~#loginDom{
+    display: block;
+    visibility: visible;
+}
+
+#tab-registry:checked~#registryDom{
+    display: block;
+    visibility: visible;
+}

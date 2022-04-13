@@ -2,38 +2,63 @@
 <html lang="en">
     <head>
         <meta charset="utf-8">
+        <link rel="stylesheet" href="static/css/base.css"/>
+        <link rel="stylesheet" href="static/css/login.css"/>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/open-iconic/1.1.1/font/css/open-iconic.min.css"></line>
         <title>teamT5Interview</title>
     </head>
     <body>
-        <div id="loginDom">
-            <h2 class="dom-label">登入</h2>
-            <div class="input-group">
-                <label class="input-group label" >帳號</label>
-                <input type="text" id="loginusername" class="input-group input" ></input>
+        <div id="login-tab" class="tabs" >
+            <label class="tab" for="tab-login">登入</label>
+            <input type="checkbox" id="tab-login" checked></input>
+            <label class="tab" for="tab-registry">註冊</label>
+            <input type="checkbox" id="tab-registry"></input>
+            <div class="tab-context" id="loginDom">
+                <div class="input-group">
+                    <label>帳號</label>
+                    <input type="text" id="loginusername"></input>
+                </div>
+                <div class="input-group">
+                    <label>密碼</span></label>
+                    <input type="password" id="loginpassword"></input>
+                </div>
+                <div class="btn-group">
+                    <button class="btn" onclick="login()">登入</button>
+                </div>
             </div>
-            <div class="input-group">
-                <label class="input-group label" >密碼</label>
-                <input type="password" id="loginpassword" class="input-group input" ></input>
+            <div class="tab-context"  id="registryDom">
+                <div class="input-group">
+                    <label>帳號</label>
+                    <input type="text" id="createusername"></input>
+                </div>
+                <br/>
+                <div class="input-group">
+                    <label>密碼</label>
+                    <input type="password" id="createpassword"></input>
+                </div>
+                <div class="btn-group">
+                    <button class="btn" onclick="createAccount()">建立</button>
+                </div>
+                <div id="toast"></div>
             </div>
-            <div class="btn-group">
-                <button class="btn" onclick="login()">GO</button>
-            </div>
-        </div>
-        <div id="registryDom">
-            <h2 class="dom-label">建置</h2>
-            <div class="input-group">
-                <label class="input-group label" >帳號</label>
-                <input type="text" id="createusername" class="input-group input" ></input>
-            </div>
-            <div class="input-group">
-                <label class="input-group label" >密碼</label>
-                <input type="password" id="createpassword" class="input-group input" ></input>
-            </div>
-            <div class="btn-group">
-                <button class="btn" onclick="createAccount()">建立</button>
-            </div>
-            <div id="toast"></div>
         </div>
     <script src="static/js/login.js"></script>
+
+    <script>
+        document.getElementById("tab-login").addEventListener("click",(ev)=>{
+            if(ev.target.checked == true){
+                document.getElementById("tab-registry").checked  = false
+            }else{
+                ev.target.checked = true
+            }
+        })
+        document.getElementById("tab-registry").addEventListener("click",(ev)=>{
+            if(ev.target.checked == true){
+                document.getElementById("tab-login").checked  = false
+            }else{
+                ev.target.checked = true
+            }
+        })
+    </script>
     </body>
 </html>
