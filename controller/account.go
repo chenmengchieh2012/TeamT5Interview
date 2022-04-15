@@ -4,9 +4,9 @@ import (
 	b64 "encoding/base64"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 
+	"teamt5interview/service"
 	"teamt5interview/utils"
 
 	"github.com/gin-contrib/sessions"
@@ -22,8 +22,9 @@ type AccountController interface {
 }
 
 type IAccountController struct {
-	engine *gin.RouterGroup
-	prefix string
+	engine      *gin.RouterGroup
+	fileService service.FileService
+	prefix      string
 }
 
 const fileSavePathDir = "file/account/"
@@ -31,8 +32,9 @@ const fileSavePathDir = "file/account/"
 func CreateAccountController(engine *gin.Engine) AccountController {
 	group := engine.Group("/v1/account")
 	c := &IAccountController{
-		prefix: "/v1/account",
-		engine: group,
+		prefix:      "/v1/account",
+		engine:      group,
+		fileService: service.CreateFileService(),
 	}
 	c.Registry()
 	return c
@@ -64,7 +66,7 @@ func (controller *IAccountController) RegistryAccount(c *gin.Context) {
 		if err != nil {
 			goto Error
 		}
-		err = ioutil.WriteFile(filepath, jsonEntity, 0644)
+		err = controller.fileService.Write(filepath, jsonEntity)
 		if err != nil {
 			goto Error
 		}
@@ -94,7 +96,7 @@ func (controller *IAccountController) loginAccount(c *gin.Context) {
 	} else {
 		fileName := b64.StdEncoding.EncodeToString([]byte(account.Username))
 		filepath := fileSavePathDir + fileName + ".json"
-		bData, err := ioutil.ReadFile(filepath)
+		bData, err := controller.fileService.Read(filepath)
 		readAccount := &Account{}
 		if err != nil {
 			fmt.Println(err)
@@ -126,6 +128,8 @@ func (controller *IAccountController) logoutAccount(c *gin.Context) {
 		session.Delete(utils.LOGIN_STATUSKEY)
 		session.Delete(utils.LOGIN_USERNAMEKEY)
 		session.Save()
+		c.Status(200)
+		c.Done()
 		return
 	} else {
 		goto Error

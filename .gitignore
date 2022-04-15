@@ -1,2 +1,3 @@
 file/account/*.json
 file/note/*.json
+file/note/**/*

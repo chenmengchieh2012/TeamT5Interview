@@ -3,9 +3,9 @@ package controller
 import (
 	b64 "encoding/base64"
 	"encoding/json"
-	"io/ioutil"
+	"fmt"
 	"net/http"
-	"os"
+	"teamt5interview/service"
 	"teamt5interview/utils"
 	"time"
 
@@ -25,17 +25,19 @@ type NoteController interface {
 }
 
 type INoteController struct {
-	engine *gin.RouterGroup
-	prefix string
+	engine      *gin.RouterGroup
+	fileService service.FileService
+	prefix      string
 }
 
 const notePathDir = "file/note/"
 
-func CreateNoteController(engine *gin.Engine) AccountController {
+func CreateNoteController(engine *gin.Engine) NoteController {
 	group := engine.Group("/v1/note")
 	c := &INoteController{
-		prefix: "/v1/note",
-		engine: group,
+		prefix:      "/v1/note",
+		engine:      group,
+		fileService: service.CreateFileService(),
 	}
 	c.Registry()
 	return c
@@ -66,7 +68,7 @@ func (controller *INoteController) Autherization() gin.HandlerFunc {
 		}
 		userDirName := b64.StdEncoding.EncodeToString([]byte(username.(string)))
 		userDirPath := notePathDir + userDirName
-		if _, err := utils.MakeDir(userDirPath); err != nil {
+		if _, err := controller.fileService.MakeDir(userDirPath); err != nil {
 			c.Abort()
 			c.JSON(http.StatusInternalServerError, "create filenote path error")
 			return
@@ -84,7 +86,7 @@ func (controller *INoteController) GetNote(c *gin.Context) {
 		goto Error
 	} else {
 		noteFilePath := userDirPath + "/" + fileId
-		bData, err := ioutil.ReadFile(noteFilePath)
+		bData, err := controller.fileService.Read(noteFilePath)
 		if err != nil {
 			goto Error
 		}
@@ -106,10 +108,10 @@ func (controller *INoteController) GetAllNote(c *gin.Context) {
 	username := session.Get(utils.LOGIN_USERNAMEKEY)
 	userDirName := b64.StdEncoding.EncodeToString([]byte(username.(string)))
 	userDirPath := notePathDir + userDirName
-	subitems, _ := ioutil.ReadDir(userDirPath)
+	subitems, _ := controller.fileService.ReadDir(userDirPath)
 	retData := make([]*Note, 0)
 	for _, subitem := range subitems {
-		bData, err := ioutil.ReadFile(userDirPath + "/" + subitem.Name())
+		bData, err := controller.fileService.Read(userDirPath + "/" + subitem.Name())
 		if err != nil {
 			goto Error
 		}
@@ -131,6 +133,7 @@ func (controller *INoteController) UpdateNote(c *gin.Context) {
 	var updatenote Note
 	err := c.Bind(&updatenote)
 	if err != nil {
+		fmt.Println("updateNote", err)
 		return
 	}
 	session := sessions.Default(c)
@@ -141,24 +144,27 @@ func (controller *INoteController) UpdateNote(c *gin.Context) {
 		goto Error
 	} else {
 		noteFilePath := userDirPath + "/" + fileId
-		bData, err := ioutil.ReadFile(noteFilePath)
+		bData, err := controller.fileService.Read(noteFilePath)
 		if err != nil {
+			fmt.Println("err", err)
 			goto Error
 		}
 		currentnote := &Note{}
 		err = json.Unmarshal(bData, currentnote)
 		if err != nil {
+			fmt.Println("err", err)
 			goto Error
 		}
 		updatenote.Id = currentnote.Id
 		if updatenote.Message == "" {
+			fmt.Println("err", err)
 			goto Empty
 		}
 		if updatenote.Time == nil {
 			updatenote.Time = currentnote.Time
 		}
 		jsonEntity, err := json.MarshalIndent(updatenote, "", " ")
-		err = ioutil.WriteFile(noteFilePath, jsonEntity, 0644)
+		err = controller.fileService.Write(noteFilePath, jsonEntity)
 		if err != nil {
 			goto Error
 		}
@@ -195,7 +201,7 @@ func (controller *INoteController) CreateNote(c *gin.Context) {
 	if err != nil {
 		goto Error
 	}
-	err = ioutil.WriteFile(noteFilePath, jsonEntity, 0644)
+	err = controller.fileService.Write(noteFilePath, jsonEntity)
 	if err != nil {
 		goto Error
 	}
@@ -220,7 +226,7 @@ func (controller *INoteController) DeleteNote(c *gin.Context) {
 		goto Error
 	} else {
 		noteFilePath := userDirPath + "/" + fileId
-		err := os.Remove(noteFilePath)
+		err := controller.fileService.Delete(noteFilePath)
 		if err != nil {
 			goto Error
 		}
